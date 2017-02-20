@@ -60,10 +60,10 @@ def analyzeIP_Orient(ip,args):
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if (r.status_code == 200):
 			json_response = r.json()
-			''' Para saber info del server es necesario romper la pass de root'''			
+			''' We need to know the password of root'''			
 			if args.bruteForce == True:
 				p,infoServer = brutteForce_Orient(ip,args.dict)
-            	data_report['server_pass'] = p
+            			data_report['server_pass'] = p
 				data_report['server_info'] = infoServer.json()
 
 			data_report['databases'] = json_response.get("databases")
@@ -123,7 +123,7 @@ def analyzeIP_Neo4j(ip,args):
 			url_props = "http://" + ip + ":7474/db/data/propertykeys"
 			data_report['labels'] = requests.get(url_labels,auth=('neo4j', ''),timeout=1 ).json()
 			data_report['types'] = requests.get(url_types,auth=('neo4j', ''),timeout=1 ).json()
-	    	data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()
+	    		data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()
 
 			''' Query to get some data of the graph database '''
 			url_query = "http://" + ip + ":7474/db/data/transaction/commit";
@@ -164,12 +164,12 @@ def analyzeIP_Neo4j(ip,args):
 				data_report["version"] = "< 3.X"
 				data_report["ip"] = ip
 				if args.bruteForce == True:
-				brutteForce_Neo4j(ip,args.dict,headers)
-				r = requests.get(url,auth=('neo4j', '1'),timeout=1 )
-				if (r.status_code == 200):
-					data_report["change_password"] = "yes"
+					brutteForce_Neo4j(ip,args.dict,headers)
+					r = requests.get(url,auth=('neo4j', '1'),timeout=1 )
+					if (r.status_code == 200):
+						data_report["change_password"] = "yes"
 					else:
-					data_report["change_password"] = "no"
+						data_report["change_password"] = "no"
 				return data_report
 			else:
 				print "The ip: " + ip + " is not a Neo4j graph database."
