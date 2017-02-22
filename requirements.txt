@@ -1,5 +1,3 @@
 requests
-socket
-socks
-argparse
 ipaddress
+socksipy-branch
