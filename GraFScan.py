@@ -79,6 +79,7 @@ def analyzeIP_Orient(ip,args):
 				data_report['server_info'] = infoServer.json()
 
 			data_report['databases'] = json_response.get("databases")
+			data_report['version_OrientDB'] = r.headers['Server']
 			databases = json_response.get("databases")
 			for database in databases:		
 				url_database = "http://"+ip+":2480/export/"+database
