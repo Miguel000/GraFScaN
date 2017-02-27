@@ -57,7 +57,7 @@ def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
 		except Exception as e:
 			pass
 
-def brutteForce_Orient(ip,dictpassw):
+def bruteForce_Orient(ip,dictpassw):
 
     url_server = "http://"+ip+":2480/server"
     for passw in dictpassw:
@@ -74,7 +74,7 @@ def analyzeIP_Orient(ip,args):
 			json_response = r.json()
 			''' Para saber info del server es necesario romper la pass de root'''			
 			if args.bruteForce == True:
-				p,infoServer = brutteForce_Orient(ip,args.listPassw)
+				p,infoServer = bruteForce_Orient(ip,args.listPassw)
             			data_report['server_pass'] = p
 				data_report['server_info'] = infoServer.json()
 
@@ -213,7 +213,7 @@ def getArguments(args):
     	listPassw=list()
 	listProxies=list()
 	arguments={}
-	parser = argparse.ArgumentParser(description='SecGD analyse the input to search Neo4j graph database.')
+	parser = argparse.ArgumentParser(description='GraFScaN analyses the input to search Neo4j graph database.')
 	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyze Neo4j Graph database')
 	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyze Orient Graph Database')
 
