@@ -17,7 +17,7 @@ pip install -r requirements.txt
 			   [-o OUTPUT] [-B] [-dict DICT] [-proxies PROXIES] [-nl]
 			   [-tor] [-DoS]
 
-	SecGD analyse the input to search Neo4j graph database.
+	GraFScaN analyses the input to search Neo4j and OrientDB graph database.
 
 	optional arguments:
 	  -h, --help            show this help message and exit
