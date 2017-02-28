@@ -213,7 +213,7 @@ def getArguments(args):
     	listPassw=list()
 	listProxies=list()
 	arguments={}
-	parser = argparse.ArgumentParser(description='GraFScaN analyses the input to search Neo4j graph database.')
+	parser = argparse.ArgumentParser(description='GraFScaN analyses the input to search Neo4j and OrientDB graph databases.')
 	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyze Neo4j Graph database')
 	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyze Orient Graph Database')
 
