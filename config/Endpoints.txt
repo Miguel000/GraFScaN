@@ -1,0 +1,14 @@
+:7474/user/neo4j/password
+:7474/db/data
+:7474/db/manage/server/version
+:7474/db/manage/server/jmx/query
+:7474/db/data/labels
+:7474/db/data/relationship/types
+:7474/db/data/propertykeys
+:7474/db/data/transaction/commit
+:7474/db/manage/server/ha/available
+:7474/db/manage/server/ha/master
+:7474/webadmin
+:2480/server
+:2480/listDatabases
+:2480/export/

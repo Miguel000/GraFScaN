@@ -1,0 +1,4 @@
+FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));
+USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});
+MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 20
+MATCH (n)-[r]-(m) RETURN n,r,m 
