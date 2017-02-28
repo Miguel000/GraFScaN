@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__author__ = 'M'
+__author__ = 'Miguel000'
 
 import requests
 import sys
@@ -66,8 +66,9 @@ def bruteForce_Orient(ip,dictpassw):
 			return passw,r_server
 
 def analyzeIP_Orient(ip,args):
+	
+	data_report = {}
 	try:
-		data_report = {}
 		url = "http://"+ip+":2480/listDatabases"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if (r.status_code == 200):
@@ -103,8 +104,9 @@ def analyzeIP_Orient(ip,args):
 
 
 def analyzeIP_Neo4j(ip,args):
+	
+	data_report = {}
 	try:
-		data_report = {}
 		url = "http://"+ip+":7474/db/data"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if r.status_code == 200:
@@ -140,7 +142,20 @@ def analyzeIP_Neo4j(ip,args):
 				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 20'}]},headers=headers).json()
 			else:
 				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m '}]},headers=headers).json()
-
+				
+			''' Part of a cluster '''
+			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
+			cluster_response = requests.get(url_cluster_avalaible,headers=headers,timeout=1)
+			if (cluster_response.status_code == 200):
+				data_report['cluster'] = True
+				url_cluster_type = "http://" + ip + ":7474/db/manage/server/ha/master"
+				if (url_cluster_type.text.encode('utf-8') == "true"):
+				    data_report['cluster_type'] = "Master"
+				else:
+				    data_report['cluster_type'] = "Slave"
+			else:
+				data_report['cluster'] = False
+				
 			''' DoS to the Neo4j '''
 			if args.DoS == True:
 				try:
@@ -159,25 +174,13 @@ def analyzeIP_Neo4j(ip,args):
 					print "Error en la denegacion"
 					print e
 					
-			''' Part of a cluster '''
-			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
-			cluster_response = requests.get(url_cluster_avalaible,headers=headers,timeout=1)
-			if (cluster_response.status_code == 200):
-				data_report['cluster'] = True
-				url_cluster_type = "http://" + ip + ":7474/db/manage/server/ha/master"
-				if (url_cluster_type.text.encode('utf-8') == "true"):
-				    data_report['cluster_type'] = "Master"
-				else:
-				    data_report['cluster_type'] = "Slave"
-			else:
-				data_report['cluster'] = False
-
 			return data_report
 
 		elif r.status_code == 401:
 			json_response = r.json()
 			if (json_response.keys()[0] == "errors"):
 				data_report["autenticacion"] = True
+				data_report['ip'] = ip
 	        		url_webadmin = "http://" + ip + ":7474/webadmin";
 	        		headers = {
 				     	'content-type': "application/json",
@@ -220,7 +223,7 @@ def getArguments(args):
 	parser.add_argument('-ip', dest='ip', help='Input one ip to analyse.')
 	parser.add_argument('-n','--network', dest='net', help='Input one network to analyse.')
 	parser.add_argument('-i', dest='fileinput', help='Input one file with one ip each line to analyse.')
-	parser.add_argument("-o", dest='output', help="Output file", default="report.txt")
+	parser.add_argument("-o", dest='output', help="Output file", default="report.json")
 
 	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
     	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict")
