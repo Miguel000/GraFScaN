@@ -11,11 +11,11 @@ pip install -r requirements.txt
 
 	------------------------------------------
 	|           GraFScaN  - beta 0.1         |
-	|					 |
+	|                                        |
 	| Authors: Miguel Hernández (@MiguelHzBz)|
-	|	   Alfonso Muñoz (@mindcrypt)    |
-	| Version: Beta 0.1	                 |
-	|					 |
+	|          Alfonso Muñoz (@mindcrypt)    |
+	| Version: Beta 0.1                      |
+	|                                        |
 	| Date: March 3rd, 2017                  |
 	------------------------------------------
 
