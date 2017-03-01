@@ -18,7 +18,7 @@ def banner():
 	------------------------------------------
 	|           GraFScaN  - beta 0.1         |
 	|					 |
-	| Authors: Miguel Boza (@MiguelHzBz)     |
+	| Authors: Miguel Hernández (@MiguelHzBz)|
 	|	   Alfonso Muñoz (@mindcrypt)    |
 	| Version: Beta 0.1	                 |
 	|					 |
