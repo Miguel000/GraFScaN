@@ -15,18 +15,18 @@ import socket
 def banner():
     print(r"""
 
-	------------------------------------------
-	|           GraFScaN  - beta 0.1         |
-	|					 |
-	| Authors: Miguel Hernández (@MiguelHzBz)|
-	|	   Alfonso Muñoz (@mindcrypt)    |
-	| Version: Beta 0.1	                 |
-	|					 |
-	| Date: March 3rd, 2017                  |
-	------------------------------------------
+	------------------------
+	|       GraFScaN       |
+	------------------------
 
-     A pentesting tool for graph databases
-     
+     An analysis graph database tool
+     List of graph database to be analized:
+
+          - Neo4j
+          - OrientDB
+          - ArangoDB
+          - AllegroGraph
+          - Virtuoso
     """)
 def dos_RamCpu(ip,url_query,headers):
 	print "Send loop to crash Neo4j..."
@@ -71,6 +71,116 @@ def bruteForce_Orient(ip,dictpassw):
 		r_server = requests.get(url_server,auth=('root',passw),timeout=1)
 		if (r_server.status_code == 200):
 			return passw,r_server
+
+def analyzeIP_ArangoDB(ip,args):
+	
+	data_report_total = {}
+	listports = ['80','8080','8000','5001','5000','8529']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/_api/version"
+			r = requests.get(url,timeout=1 )
+			if "arango" in r.headers['server'].lower():
+				data_report = {}
+				data_report['Arango']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				if (r.status_code == 200):
+					r_json = r.json()
+					data_report['Auth']= False
+					data_report['Version'] = r_json.get('version')
+					data_report['License'] = r_json.get('license')
+					url_collections = "http://"+ip+":"+port+"/_api/collection"
+					url_user = "http://"+ip+":"+port+"/_api/user"
+					url_database = "http://"+ip+":"+port+"/_api/database/user"
+					try:
+						r2 = requests.get(url_collections,timeout=1).json()
+						data_report['Collections'] = r2['result']
+						r3 = requests.get(url_user,timeout=1).json()
+						data_report['User'] = r3['result']
+						r4 = requests.get(url_database,timeout=1).json()
+						data_report['Databases'] = r4['result']
+
+					except Exception as e:
+						print "Error when tried to search more information."
+						print e
+
+				else:
+					data_report['Auth']=True
+	
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + " isn't a ArangoDB."
+
+		except Exception as e:
+			print "The ip: " + ip + " is not a ArangoDB graph database."
+			print e	
+
+	return data_report_total
+
+
+def analyzeIP_Virtuoso(ip,args):
+	
+	data_report_total = {}
+	listports = ['80','8080','1111','8889','8890','8001']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/conductor"
+			r = requests.get(url,timeout=1 )
+			if "virtuoso" in r.headers['Server'].lower():
+				data_report = {}
+				data_report['Virtuoso']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + " isn't a Virtuoso."
+
+		except Exception as e:
+			print "The ip: " + ip + " is not a Virtuoso graph database."
+			print e	
+
+	return data_report_total
+
+def analyzeIP_Allegro(ip,args):
+	
+	data_report_total = {}
+	listports = ['80','8080','10035']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/repositories"
+			r = requests.get(url,timeout=1 )
+			if "allegro" in r.headers['server'].lower():
+				data_report = {}
+				data_report['AllegroGraph']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				data_report['Repositories'] = r.text
+				url_catalogs = "http://"+ip+":"+port+"/catalogs"
+				url_user = "http://"+ip+":"+port+"/users"
+				url_database = "http://"+ip+":"+port+"/roles"
+				try:
+					r2 = requests.get(url_collections,timeout=1)
+					data_report['Catalogs'] = r2.text
+					r3 = requests.get(url_user,timeout=1)
+					data_report['User'] = r3.text
+					r4 = requests.get(url_database,timeout=1)
+					data_report['Roles'] = r4.text
+
+				except Exception as e:
+					print "Error when tried to search more information."
+					print e
+				if 'anonymous' in r3.text:
+					data_report['Anon_user'] = True
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + " isn't a Allegro."
+
+		except Exception as e:
+			print "The ip: " + ip + " is not a Allegro graph database."
+			print e	
+
+	return data_report_total
 
 def analyzeIP_Orient(ip,args):
 	
@@ -223,21 +333,25 @@ def getArguments(args):
     	listPassw=list()
 	listProxies=list()
 	arguments={}
-	parser = argparse.ArgumentParser(description='GraFScaN analyses Neo4j and OrientDB graph databases from Internet.')
-	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyse Neo4j Graph database')
-	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyse Orient Graph Database')
+	parser = argparse.ArgumentParser(description='GraFScaN analyses the input to search differents graph databases. Actually analyses Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB')
+	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyze Neo4j Graph database')
+	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyze Orient Graph Database')
+	parser.add_argument('-arango', dest='arango', action='store_true', help='Discover and analyze Arango Graph Database')
+	parser.add_argument('-virtuoso', dest='virtuoso', action='store_true', help='Discover and analyze virtuoso Graph Database')
+	parser.add_argument('-allegro', dest='allegro', action='store_true', help='Discover and analyze allegro Graph Database')
+	parser.add_argument('-all', dest='all', action='store_true', help='Discover and analyze All Graph Database')	
 
-	parser.add_argument('-ip', dest='ip', help='IP target to analyse.')
-	parser.add_argument('-n','--network', dest='net', help='Network target to analyse.')
-	parser.add_argument('-i', dest='fileinput', help='List of targets (IPs). One IP per line.')
+	parser.add_argument('-ip', dest='ip', help='Input one ip to analyse.')
+	parser.add_argument('-n','--network', dest='net', help='Input one network to analyse.')
+	parser.add_argument('-i', dest='fileinput', help='Input one file with one ip each line to analyse.')
 	parser.add_argument("-o", dest='output', help="Output file", default="report.json")
 
-	parser.add_argument('-b','--bruteforce', dest='bruteForce',action='store_true', help='Brute-force login attack.')
-    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line.", default="dict")
-	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>.", default="proxies")
+	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
+    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict")
+	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>", default="proxies")
 	parser.add_argument('-nl', '--no-limit', dest='limit', action='store_true',help='Option to dump all database of Neo4j without auth.')
-	parser.add_argument('-tor', dest='tor', action='store_true',help='Connect to the graph database target through Tor (previously executed).')
-	parser.add_argument('-DoS', dest='DoS',action='store_true', help='DoS attacks. Currently, Neo4j without authentication.')
+	parser.add_argument('-tor', dest='tor', action='store_true',help='Option to use proxy TOR to scan de input data, need install and run before executed.')
+	parser.add_argument('-DoS', dest='DoS',action='store_true', help='Option to use DoS without authentication Neo4j.')
 	
 
 	args = parser.parse_args()
@@ -246,8 +360,8 @@ def getArguments(args):
 		print "Need one type of input, -i -ip or -n/--network"
 		print parser.print_help()
 		sys.exit(-1)
-	elif not args.neo4j and not args.orient:
-		print "Need -neo4j or -orient argument"
+	elif not args.neo4j and not args.orient and not args.arango and not args.virtuoso and not args.allegro and not args.all:
+		print "Need -neo4j, -orient, -arango, -virtuoso, -allegro or -all argument"
 		print parser.print_help()
 		sys.exit(-1)
 	else:
@@ -301,18 +415,51 @@ def main():
 		    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr="127.0.0.1", port=9050)
 		    socket.socket = socks.socksocket
 	for ip in args.listIps:
-		if args.neo4j:
+		if args.all:
+			dataN = analyzeIP_Neo4j(str(ip),args)
+			if dataN:
+				results.append(dataN)
+			dataO = analyzeIP_Orient(str(ip),args)
+			if dataO:
+				results.append(dataO)
+			dataA = analyzeIP_ArangoDB(str(ip),args)
+			if dataA:
+				results.append(dataA)
+			dataV = analyzeIP_Virtuoso(str(ip),args)
+			if dataV:
+				results.append(dataV)
+			dataAl = analyzeIP_Allegro(str(ip),args)
+			if dataAl:
+				results.append(dataAl)
+		elif args.neo4j:
 			data = analyzeIP_Neo4j(str(ip),args)
-			if (data is not None):
+			if data:
 				results.append(data)
-		if args.orient:
+		elif args.orient:
 			data = analyzeIP_Orient(str(ip),args)
-			if (data is not None):
+			if data:
 				results.append(data)
-	fileout = open(args.output, "w")
-	json_str = json.dumps(results)
-	fileout.write(json_str)
-	fileout.close()
+		elif args.arango:
+			data = analyzeIP_ArangoDB(str(ip),args)
+			if data:
+				results.append(data)
+		elif args.virtuoso:
+			data = analyzeIP_Virtuoso(str(ip),args)
+			if data:
+				results.append(data)
+		elif args.allegro:
+			data = analyzeIP_Allegro(str(ip),args)
+			if data:
+				results.append(data)	
+		else:
+			print "Error with arguments"
+	if results:
+		fileout = open(args.output, "w")
+		json_str = json.dumps(results)
+		fileout.write(json_str)
+		fileout.close()
+	else:
+		print "No results"
 
 if __name__ == "__main__":
 	main()
