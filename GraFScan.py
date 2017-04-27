@@ -15,12 +15,19 @@ import socket
 def banner():
     print(r"""
 
-	------------------------
-	|       GraFScaN       |
-	------------------------
 
-     An analysis graph database tool
-     List of graph database to be analized:
+	------------------------------------------
+	|           GraFScaN  - beta 0.1         |
+	|					 |
+	| Authors: Miguel Hernández (@MiguelHzBz)|
+	|	   Alfonso Muñoz (@mindcrypt)    |
+	| Version: Beta 0.1	                 |
+	|					 |
+	| Date: March 3rd, 2017                  |
+	------------------------------------------
+
+     A pentesting tool for graph databases
+     List of graph database to be analyzed:
 
           - Neo4j
           - OrientDB
@@ -341,17 +348,17 @@ def getArguments(args):
 	parser.add_argument('-allegro', dest='allegro', action='store_true', help='Discover and analyze allegro Graph Database')
 	parser.add_argument('-all', dest='all', action='store_true', help='Discover and analyze All Graph Database')	
 
-	parser.add_argument('-ip', dest='ip', help='Input one ip to analyse.')
-	parser.add_argument('-n','--network', dest='net', help='Input one network to analyse.')
-	parser.add_argument('-i', dest='fileinput', help='Input one file with one ip each line to analyse.')
+	parser.add_argument('-ip', dest='ip', help='IP target to analyse.')
+	parser.add_argument('-n','--network', dest='net', help='Network target to analyse.')
+	parser.add_argument('-i', dest='fileinput', help='List of targets (IPs). One IP per line.')
 	parser.add_argument("-o", dest='output', help="Output file", default="report.json")
 
-	parser.add_argument('-B','--bruteforce', dest='bruteForce',action='store_true', help='Option to use brute force with authentication Neo4j.')
-    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line", default="dict")
-	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>", default="proxies")
+	parser.add_argument('-b','--bruteforce', dest='bruteForce',action='store_true', help='Brute-force login attack.')
+    	parser.add_argument("-dict", dest='dict', help="Dictionary file, one password per line.", default="dict")
+	parser.add_argument("-proxies", dest='proxies', help="Proxies file, format: <ip>:<port>.", default="proxies")
 	parser.add_argument('-nl', '--no-limit', dest='limit', action='store_true',help='Option to dump all database of Neo4j without auth.')
-	parser.add_argument('-tor', dest='tor', action='store_true',help='Option to use proxy TOR to scan de input data, need install and run before executed.')
-	parser.add_argument('-DoS', dest='DoS',action='store_true', help='Option to use DoS without authentication Neo4j.')
+	parser.add_argument('-tor', dest='tor', action='store_true',help='Connect to the graph database target through Tor (previously executed).')
+	parser.add_argument('-DoS', dest='DoS',action='store_true', help='DoS attacks. Currently, Neo4j without authentication.')
 	
 
 	args = parser.parse_args()

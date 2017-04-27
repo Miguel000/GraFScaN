@@ -1,5 +1,5 @@
 # GraFScaN
-Tool to discover and report the configuration and security in graph databases. We analyze Neo4j and OrientDB
+Tool to discover and report the configuration and security in graph databases. Currently, Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB
 
 ## Requirements:
 
@@ -8,29 +8,34 @@ pip install -r requirements.txt
 
 ## GraFScaN Help:
 	
-	------------------------
-	|       GraFScaN       |
-	------------------------
-
-     An analysis graph database tool
+	------------------------------------------
+-	|           GraFScaN  - beta 0.1         |
+-	|                                        |
+-	| Authors: Miguel Hernández (@MiguelHzBz)|
+-	|          Alfonso Muñoz (@mindcrypt)    |
+-	| Version: Beta 0.1                      |
+-	|                                        |	
+-	| Date: March 3rd, 2017                  |	
+-	------------------------------------------	
+-		
+-	A pentesting tool for graph databases
     
 	usage: GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro]
                    [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]
                    [-dict DICT] [-proxies PROXIES] [-nl] [-tor] [-DoS]
 
-	GraFScaN analyses the input to search Neo4j, OrientDB and ArangoDB graph database.
+	GraFScaN analyses the input to search Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB graph database.
 
 	optional arguments:
 	  -h, --help            show this help message and exit
 	  -neo4j                Discover and analyze Neo4j Graph database
-          -orient               Discover and analyze Orient Graph Database
-          -arango               Discover and analyze Arango Graph Database
-          -virtuoso             Discover and analyze virtuoso Graph Database
-          -allegro              Discover and analyze allegro Graph Database
-          -all                  Discover and analyze All Graph Database
+         -orient               Discover and analyze Orient Graph Database
+         -arango               Discover and analyze Arango Graph Database
+         -virtuoso             Discover and analyze virtuoso Graph Database
+         -allegro              Discover and analyze allegro Graph Database
+         -all                  Discover and analyze All Graph Database
 	  -ip IP                Input one ip to analyse.
-	  -n NET, --network NET
-				Input one network to analyse.
+	  -n NET, --network NET Input one network to analyse.
 	  -i FILEINPUT          Input one file with one ip each line to analyse.
 	  -o OUTPUT             Output file
 	  -B, --bruteforce      Option to use brute force with authentication Neo4j.
