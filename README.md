@@ -1,50 +1,45 @@
-# GraFScaN - beta 0.1
-Tool to discover and report the configuration and security in graph databases. Currently, Neo4j and OrientDB
+# GraFScaN
+Tool to discover and report the configuration and security in graph databases. We analyze Neo4j and OrientDB
 
 ## Requirements:
 
+sudo apt-get install python-socksipy
 pip install -r requirements.txt
 
 ## GraFScaN Help:
 	
+	------------------------
+	|       GraFScaN       |
+	------------------------
 
-
-	------------------------------------------
-	|           GraFScaN  - beta 0.1         |
-	|                                        |
-	| Authors: Miguel Hernández (@MiguelHzBz)|
-	|          Alfonso Muñoz (@mindcrypt)    |
-	| Version: Beta 0.1                      |
-	|                                        |
-	| Date: March 3rd, 2017                  |
-	------------------------------------------
-
-	A pentesting tool for graph databases
-     
+     An analysis graph database tool
     
-	usage: GraFScan.py [-h] [-neo4j] [-orient] [-ip IP] [-n NET] [-i FILEINPUT]
-			   [-o OUTPUT] [-b] [-dict DICT] [-proxies PROXIES] [-nl]
-			   [-tor] [-DoS]
+	usage: GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro]
+                   [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]
+                   [-dict DICT] [-proxies PROXIES] [-nl] [-tor] [-DoS]
 
-	GraFScaN analyses Neo4j and OrientDB graph databases from Internet.
+	GraFScaN analyses the input to search Neo4j, OrientDB and ArangoDB graph database.
 
 	optional arguments:
 	  -h, --help            show this help message and exit
-	  -neo4j                Discover and analyse Neo4j Graph database
-	  -orient               Discover and analyse Orient Graph Database
-	  -ip IP                IP target to analyse.
+	  -neo4j                Discover and analyze Neo4j Graph database
+          -orient               Discover and analyze Orient Graph Database
+          -arango               Discover and analyze Arango Graph Database
+          -virtuoso             Discover and analyze virtuoso Graph Database
+          -allegro              Discover and analyze allegro Graph Database
+          -all                  Discover and analyze All Graph Database
+	  -ip IP                Input one ip to analyse.
 	  -n NET, --network NET
-				Network target to analyse.
-	  -i FILEINPUT          List of targets (IPs). One IP per line.
+				Input one network to analyse.
+	  -i FILEINPUT          Input one file with one ip each line to analyse.
 	  -o OUTPUT             Output file
-	  -b, --bruteforce      Brute-force login attack.
-	  -dict DICT            Dictionary file, one password per line.
-	  -proxies PROXIES      Proxies file, format: <ip>:<port>.
+	  -B, --bruteforce      Option to use brute force with authentication Neo4j.
+	  -dict DICT            Dictionary file, one password per line
+	  -proxies PROXIES      Proxies file, format: <ip>:<port>
 	  -nl, --no-limit       Option to dump all database of Neo4j without auth.
-	  -tor                  Connect to the graph database target through Tor
-				(previously executed).
-	  -DoS                  DoS attacks. Currently, Neo4j without authentication.
-
+	  -tor                  Option to use proxy TOR to scan de input data, need
+				install and run before executed.
+	  -DoS                  Option to use DoS without authentication Neo4j.
 
 
 ## Output: 
@@ -77,11 +72,38 @@ pip install -r requirements.txt
 * server_pass: Password of root user.
 * serer_info: Json object with all info of server: connections, globalproperties, storadges and properties. Only if you use brute force option.
 
-The tool tries to export all databases in the OrientDB Server, it creates a folder with the IP as name and puts into the compress databases. The tool only uses default auth to send the request.
+The tool try to export all databases in the OrientDB Server, it creates a folder with the ip as name and put into the compress databases. Only use default auth to send the request.
+
+### ArangoDB
+
+* Arango: True if appear in the headers response.
+* IP
+* Port
+* Auth: False if the auth is disabled.
+* Collections: List of collections in database.
+* User: User with we access to the database.
+* Databases: Name of databases where we can access.
+
+### VirtuosoDB
+
+* Virtuoso
+* IP
+* Port
+
+### AllegroGraph
+
+* AllegroGraph: True if appear in the headers response.
+* IP
+* Port
+* Repositories: List of repositories.
+* Catalogs
+* User: A user other than anonymous is required
+* Roles: A user other than anonymous is required.
+* Anon_user: True when we access with an anonymous user.
 
 ## Some notes:
 
-* If you use TOR to anonymise your IP, it is necessary to start the node instance before executed.
+* If you use TOR to anonymize your ip, it is necessary to start the node instance before executed.
 
 * If you dont put any file in output, the report is written in report.json
 
