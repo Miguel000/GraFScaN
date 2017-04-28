@@ -9,13 +9,13 @@ pip install -r requirements.txt
 ## GraFScaN Help:
 	
 	------------------------------------------
--	|           GraFScaN  - beta 0.1         |
+-	|           GraFScaN  -  v1.0            |
 -	|                                        |
 -	| Authors: Miguel Hernández (@MiguelHzBz)|
 -	|          Alfonso Muñoz (@mindcrypt)    |
 -	| Version: Beta 0.1                      |
 -	|                                        |	
--	| Date: March 3rd, 2017                  |	
+-	| Last update: April 28, 2017            |	
 -	------------------------------------------	
 -		
 -	A pentesting tool for graph databases
