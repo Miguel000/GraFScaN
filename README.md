@@ -9,16 +9,16 @@ pip install -r requirements.txt
 ## GraFScaN Help:
 	
 	------------------------------------------
--	|           GraFScaN  -  v1.0            |
--	|                                        |
--	| Authors: Miguel Hernández (@MiguelHzBz)|
--	|          Alfonso Muñoz (@mindcrypt)    |
--	| Version: Beta 0.1                      |
--	|                                        |	
--	| Last update: April 28, 2017            |	
--	------------------------------------------	
--		
--	A pentesting tool for graph databases
+	|           GraFScaN  -  v1.0            |
+	|                                        |
+	| Authors: Miguel Hernández (@MiguelHzBz)|
+	|          Alfonso Muñoz (@mindcrypt)    |
+	| Version: Beta 0.1                      |
+	|                                        |	
+	| Last update: April 28, 2017            |	
+	------------------------------------------	
+		
+	A pentesting tool for graph databases
     
 	usage: GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro]
                    [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]
