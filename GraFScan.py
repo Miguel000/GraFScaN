@@ -9,6 +9,7 @@ import json
 import argparse
 import ipaddress
 import os
+import shutil
 
 import socks
 import socket
@@ -122,10 +123,10 @@ def analyzeIP_ArangoDB(ip,args):
 				print "Saving report of ArangoDB"
 				data_report_total[port]= data_report					
 			else:
-				print "The ip: " + ip + " isn't a ArangoDB."
+				print "The ip: " + ip + " with port "+port+" isn't a ArangoDB."
 
 		except Exception as e:
-			print "The ip: " + ip + " is not a ArangoDB graph database."
+			print "The ip: " + ip + " with port "+port+" is not a ArangoDB graph database."
 			print e	
 	return data_report_total
 
@@ -133,7 +134,7 @@ def analyzeIP_ArangoDB(ip,args):
 def analyzeIP_Virtuoso(ip,args):
 	print "Start the Virtuoso module"
 	data_report_total = {}
-	listports = ['80','8080','1111','8889','8890','8001']
+	listports = ['80','8080','1111','8888','8889','8890','8001']
 	for port in listports:	
 		try:
 			url = "http://"+ip+":"+port+"/conductor"
@@ -146,10 +147,10 @@ def analyzeIP_Virtuoso(ip,args):
 				print "Saving report of Virtuoso database"
 				data_report_total[port]= data_report					
 			else:
-				print "The ip: " + ip + " isn't a Virtuoso."
+				print "The ip: " + ip + " with port "+port+" isn't a Virtuoso."
 
 		except Exception as e:
-			print "The ip: " + ip + " is not a Virtuoso graph database."
+			print "The ip: " + ip + " with port "+port+" is not a Virtuoso graph database."
 			print e	
 	return data_report_total
 
@@ -171,9 +172,11 @@ def analyzeIP_Allegro(ip,args):
 				url_user = "http://"+ip+":"+port+"/users"
 				url_database = "http://"+ip+":"+port+"/roles"
 				try:
-					r2 = requests.get(url_collections,timeout=1)
+					r2 = requests.get(url_catalogs,timeout=1)
 					data_report['Catalogs'] = r2.text
 					r3 = requests.get(url_user,timeout=1)
+					if 'anonymous' in r3.text:
+						data_report['Anon_user'] = True
 					data_report['User'] = r3.text
 					r4 = requests.get(url_database,timeout=1)
 					data_report['Roles'] = r4.text
@@ -181,15 +184,14 @@ def analyzeIP_Allegro(ip,args):
 				except Exception as e:
 					print "Error when tried to search more information."
 					print e
-				if 'anonymous' in r3.text:
-					data_report['Anon_user'] = True
+				
 				print "Saving report of AllegroGraph database"
 				data_report_total[port]= data_report					
 			else:
-				print "The ip: " + ip + " isn't a Allegro."
+				print "The ip: " + ip + "  with port  "+port+" isn't a Allegro."
 
 		except Exception as e:
-			print "The ip: " + ip + " is not a Allegro graph database."
+			print "The ip: " + ip + " with port  "+port+" is not a Allegro graph database."
 			print e	
 	
 	return data_report_total
@@ -209,21 +211,25 @@ def analyzeIP_Orient(ip,args):
 				if args.bruteForce == True:
 					p,infoServer = bruteForce_Orient(ip,args.listPassw)
 		    			data_report['server_pass'] = p
-					data_report['server_info'] = infoServer.json()
+					data_report['server_info'] = infoServer.json()				
 				data_report['auth'] = False
 				data_report['databases'] = json_response.get("databases")
 				databases = json_response.get("databases")
 				for database in databases:		
-					url_database = "http://"+ip+":2480/export/"+database
-					defaultPass=['admin','reader','writer']
-					for dPass in defaultPass:
-						r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=1)
-						if (r_data.status_code == 200):
-							if not os.path.exists(ip):
-	    							os.makedirs(ip)
-							with open(ip+"/"+database+'.gz', 'wb') as out_file:
-								shutil.copyfileobj(r_data.raw, out_file)
-						break;
+						url_database = "http://"+ip+":2480/export/"+database
+						defaultPass=['admin','reader','writer']
+						for dPass in defaultPass:
+							try:
+								r_data = requests.get(url_database,stream=True,auth=(dPass,dPass),timeout=10)
+								if (r_data.status_code == 200):
+									data_report[database + "_defaultcredentials"] = True
+									if not os.path.exists(ip):
+		    								os.makedirs(ip)
+									with open(ip+"/"+database+'.gz', 'wb') as out_file:
+										shutil.copyfileobj(r_data.raw, out_file)
+							except Exception as e:
+								print "Error when test default credentials"
+								print e	
 				data_report['ip'] = ip
 				print "Saving report of OrientDB"
 				
