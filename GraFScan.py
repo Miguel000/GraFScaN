@@ -34,6 +34,8 @@ def banner():
           - ArangoDB
           - AllegroGraph
           - Virtuoso
+
+
     """)
 def dos_RamCpu(ip,url_query,headers):
 	print "Send loop to crash Neo4j..."
@@ -80,7 +82,7 @@ def bruteForce_Orient(ip,dictpassw):
 			return passw,r_server
 
 def analyzeIP_ArangoDB(ip,args):
-	
+	print "Start the ArangoDB module"
 	data_report_total = {}
 	listports = ['80','8080','8000','5001','5000','8529']
 	for port in listports:	
@@ -114,7 +116,7 @@ def analyzeIP_ArangoDB(ip,args):
 
 				else:
 					data_report['Auth']=True
-	
+				print "Saving report of ArangoDB"
 				data_report_total[port]= data_report					
 			else:
 				print "The ip: " + ip + " isn't a ArangoDB."
@@ -122,12 +124,11 @@ def analyzeIP_ArangoDB(ip,args):
 		except Exception as e:
 			print "The ip: " + ip + " is not a ArangoDB graph database."
 			print e	
-
 	return data_report_total
 
 
 def analyzeIP_Virtuoso(ip,args):
-	
+	print "Start the Virtuoso module"
 	data_report_total = {}
 	listports = ['80','8080','1111','8889','8890','8001']
 	for port in listports:	
@@ -139,6 +140,7 @@ def analyzeIP_Virtuoso(ip,args):
 				data_report['Virtuoso']=True
 				data_report['IP']=ip
 				data_report['Port']=port
+				print "Saving report of Virtuoso database"
 				data_report_total[port]= data_report					
 			else:
 				print "The ip: " + ip + " isn't a Virtuoso."
@@ -146,11 +148,10 @@ def analyzeIP_Virtuoso(ip,args):
 		except Exception as e:
 			print "The ip: " + ip + " is not a Virtuoso graph database."
 			print e	
-
 	return data_report_total
 
 def analyzeIP_Allegro(ip,args):
-	
+	print "Start the AllegroGraph module"
 	data_report_total = {}
 	listports = ['80','8080','10035']
 	for port in listports:	
@@ -179,6 +180,7 @@ def analyzeIP_Allegro(ip,args):
 					print e
 				if 'anonymous' in r3.text:
 					data_report['Anon_user'] = True
+				print "Saving report of AllegroGraph database"
 				data_report_total[port]= data_report					
 			else:
 				print "The ip: " + ip + " isn't a Allegro."
@@ -186,18 +188,18 @@ def analyzeIP_Allegro(ip,args):
 		except Exception as e:
 			print "The ip: " + ip + " is not a Allegro graph database."
 			print e	
-
+	
 	return data_report_total
 
 def analyzeIP_Orient(ip,args):
-	
+	print "Start the Orientdb module "	
 	data_report = {}
 	try:
 		url = "http://"+ip+":2480/listDatabases"
 		r = requests.get(url,auth=('neo4j', ''),timeout=1 )
 		if (r.status_code == 200):
 			json_response = r.json()
-			''' Para saber info del server es necesario romper la pass de root'''			
+			''' Required pass of root to get server information '''			
 			if args.bruteForce == True:
 				p,infoServer = bruteForce_Orient(ip,args.listPassw)
             			data_report['server_pass'] = p
@@ -218,6 +220,7 @@ def analyzeIP_Orient(ip,args):
 							shutil.copyfileobj(r_data.raw, out_file)
 					break;
 			data_report['ip'] = ip
+			print "Saving report of OrientDB"
 			return data_report
 		else:
 			print "The ip: " + ip + " is a OrientDB but not auth."
@@ -229,6 +232,7 @@ def analyzeIP_Orient(ip,args):
 
 def analyzeIP_Neo4j(ip,args):
 	
+	print "Start the Neo4j module "
 	data_report = {}
 	try:
 		url = "http://"+ip+":7474/db/data"
@@ -236,6 +240,7 @@ def analyzeIP_Neo4j(ip,args):
 		if r.status_code == 200:
 			json_response = r.json()
 			data_report['version'] = json_response.get("neo4j_version")
+			print "This IP has a Neo4j graph database."
 			data_report['ip'] = ip
 			url_license = "http://" + ip + ":7474/db/manage/server/version"
 			data_report['license'] = requests.get(url_license,auth=('neo4j', ''),timeout=1 ).json()
@@ -264,6 +269,7 @@ def analyzeIP_Neo4j(ip,args):
 			url_query = "http://" + ip + ":7474/db/data/transaction/commit";
 			if args.limit == False:
 				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 20'}]},headers=headers).json()
+				print "recojo info"
 			else:
 				data_report['info'] = requests.post(url_query,json={'statements': [{'resultDataContents':['row'], 'statement':'MATCH (n)-[r]-(m) RETURN n,r,m '}]},headers=headers).json()
 				
@@ -295,9 +301,9 @@ def analyzeIP_Neo4j(ip,args):
 						pass
 					print "DoS end"
 				except Exception as e:
-					print "Error en la denegacion"
+					print "DoS Error"
 					print e
-					
+			print "Saving report of Neo4j database"
 			return data_report
 
 		elif r.status_code == 401:
@@ -325,6 +331,7 @@ def analyzeIP_Neo4j(ip,args):
 						data_report["old_passwd"]= passwd_old
 			    		else:
 						data_report["change_password"] = "no"
+				print "Saving report of Neo4j database"
 				return data_report
 			else:
 				print "The ip: " + ip + " is not a Neo4j graph database."
@@ -364,11 +371,17 @@ def getArguments(args):
 	args = parser.parse_args()
 
     	if not args.ip and not args.fileinput and not args.net:
+		print "--------------"
+		print "Error in input arguments: "
 		print "Need one type of input, -i -ip or -n/--network"
+		print "--------------"
 		print parser.print_help()
 		sys.exit(-1)
 	elif not args.neo4j and not args.orient and not args.arango and not args.virtuoso and not args.allegro and not args.all:
+		print "--------------"
+		print "Error in input arguments: "		
 		print "Need -neo4j, -orient, -arango, -virtuoso, -allegro or -all argument"
+		print "--------------"
 		print parser.print_help()
 		sys.exit(-1)
 	else:
@@ -378,7 +391,9 @@ def getArguments(args):
 			try:
 				listIps = list(ipaddress.ip_network(unicode(args.net)).hosts())
 			except Exception as e:
-				print "Wrong value of the network.\n\n"
+				print "--------------"
+				print "Wrong value of the input network.\n\n"
+				print "--------------"
 				print parser.print_help()
 				sys.exit(-1)
 		if args.fileinput:
@@ -387,7 +402,9 @@ def getArguments(args):
 				for line in f:
 					listIps.append(line.strip())
 			except Exception as e:
+				print "--------------"
 				print "Wrong input file.\n\n"
+				print "--------------"
 				print parser.print_help()
 				sys.exit(-1)
 
@@ -398,7 +415,9 @@ def getArguments(args):
 				listPassw.append(line.strip())	
 			    args.listPassw = listPassw			
 			except Exception as e:
+			    print "--------------"
 			    print "Wrong dict file.\n\n"
+			    print "--------------"
 			    print parser.print_help()
 			    sys.exit(-1)
 			if args.neo4j:
@@ -408,8 +427,10 @@ def getArguments(args):
 						listProxies.append(line.strip())
 					args.listProxies = listProxies
 				except Exception as e:
-			    		print "Wrong proxies file.\n\n"
-			    		print parser.print_help()
+					print "--------------"			    
+					print "Wrong proxies file.\n\n"
+					print "--------------"			    		
+					print parser.print_help()
 			    		sys.exit(-1)
 	args.listIps = listIps
 	return args
@@ -418,10 +439,13 @@ def main():
 	banner()
 	results = []
 	args = getArguments(sys.argv)
+	print "Start the analyze: "
 	if args.tor == True:
 		    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr="127.0.0.1", port=9050)
 		    socket.socket = socks.socksocket
 	for ip in args.listIps:
+		print "IP: " + ip
+		print "-----------------------"
 		if args.all:
 			dataN = analyzeIP_Neo4j(str(ip),args)
 			if dataN:
@@ -461,11 +485,13 @@ def main():
 		else:
 			print "Error with arguments"
 	if results:
+		print "Writting the results in the output file: " + args.output
 		fileout = open(args.output, "w")
 		json_str = json.dumps(results)
 		fileout.write(json_str)
 		fileout.close()
 	else:
+		print "-----------"
 		print "No results"
 
 if __name__ == "__main__":
