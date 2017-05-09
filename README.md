@@ -12,7 +12,7 @@ pip install -r requirements.txt
 ## Usage
 Run the program with following command: 
 
-`python GraFScaN.py`
+`python GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro] [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]     [-dict DICT] [-proxies PROXIES] [-nl] [-tor] [-DoS]`
 
 You can get basic usage information inside the menus.
 
