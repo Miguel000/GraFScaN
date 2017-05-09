@@ -3,17 +3,27 @@ Tool to discover and report the configuration and security in graph databases. C
 
 ## Requirements:
 
+Python version 2.7.x
+
 sudo apt-get install python-socksipy
+
 pip install -r requirements.txt
+
+## Usage
+Run the program with following command: 
+
+`python GraFScaN.py`
+
+You can get basic usage information inside the menus.
 
 ## GraFScaN Help:
 	
 	------------------------------------------
-	|           GraFScaN  -  v1.0            |
+	|           GraFScaN                     |
 	|                                        |
 	| Authors: Miguel Hernández (@MiguelHzBz)|
 	|          Alfonso Muñoz (@mindcrypt)    |
-	| Version: Beta 0.1                      |
+	| Version: v1.0                          |
 	|                                        |	
 	| Last update: April 28, 2017            |	
 	------------------------------------------	
@@ -75,9 +85,9 @@ pip install -r requirements.txt
 * databases: Array with all names of databases in OrientDB Server.
 * version_OrientDB: Version of OrientDB Server.
 * server_pass: Password of root user.
-* serer_info: Json object with all info of server: connections, globalproperties, storadges and properties. Only if you use brute force option.
+* serer_info: Json object with all information of server: connections, globalproperties, storadges and properties. Only if you use brute force option.
 
-The tool try to export all databases in the OrientDB Server, it creates a folder with the ip as name and put into the compress databases. Only use default auth to send the request.
+The tool tries to export all databases in the OrientDB Server, it creates a folder with the IP as name and put into the compress databases. Only use default auth to send the request.
 
 ### ArangoDB
 
@@ -110,9 +120,18 @@ The tool try to export all databases in the OrientDB Server, it creates a folder
 
 * If you use TOR to anonymize your ip, it is necessary to start the node instance before executed.
 
-* If you dont put any file in output, the report is written in report.json
+* If you don't put any file in output, the report is written in report.json
 
-* If you dont put any file after the -dict option, the tool try to open dict file in the actual path.
+* If you don't put any file after the -dict option, the tool try to open dict file in the actual path.
 
-* If you dont put any file after the -proxies option, the tool try to open proxies file in the actual path.
+* If you don't put any file after the -proxies option, the tool try to open proxies file in the actual path.
 
+## Authors
+This project is written by Miguel Hernández and Alfonso Muñoz
+
+# Legal Warning
+
+While this may be helpful for some, there are significant risks.
+You could go to jail on obstruction of justice charges just for running grafscan,
+even though you are innocent. Your are on notice, that using this tool outside your
+"own" environment is considered malicious and is against the law. Use with caution.
