@@ -5,7 +5,7 @@ Tool to discover and report the configuration and security in graph databases. C
 
 Python version 2.7.x
 
-sudo apt-get install python-socksipy
+sudo apt-get install python-socks
 
 pip install -r requirements.txt
 
