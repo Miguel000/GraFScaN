@@ -136,11 +136,15 @@ You could go to jail on obstruction of justice charges just for running grafscan
 even though you are innocent. Your are on notice, that using this tool outside your
 "own" environment is considered malicious and is against the law. Use with caution.
 
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
 ## Authors
 This project is written by Miguel Hernández and Alfonso Muñoz
 <!-- Banner -->
-<style>.heart{color:#e25555;}</style>
 <p align="center">
   <img src="./images/banner.png"/>
 </p>
-<h4 align="center" style="margin: -20px">Created with <span class="heart">❤</span> by <a Cybersecurity Lab @ <a href="https://www.bbvanexttechnologies.com">BBVA Next Techonologies</a> </h4>
+<h4 align="center" style="margin: -20px">Made with <span style="color:#e25555;">❤️</span> by <a Cybersecurity Lab @ <a href="https://www.bbvanexttechnologies.com">BBVA Next Techonologies</a> </h4>
