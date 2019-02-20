@@ -1,35 +1,38 @@
-# GraFScaN
-Tool to discover and report the configuration and security in graph databases. Currently, Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB
+<h1 align="center">GraFScaN</h1>
+
+<p align="center">
+	<img src="./images/logo.png" width="20%" />
+</p>
+
+> Tool to discover and report the configuration and security in graph databases. Currently, Neo4j, OrientDB, ArangoDB, AllegroGraph and VirtuosoDB
 
 ## Requirements:
 
-Python version 2.7.x
-
-sudo apt-get install python-socks
-
-pip install -r requirements.txt
+* Python version 2.7.x
+* PySocks: `sudo apt-get install pysocks`
+* Requirements: `pip install -r requirements.txt`
 
 ## Usage
-Run the program with following command: 
+Run the program with following command:
 
 `python GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro] [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]     [-dict DICT] [-proxies PROXIES] [-nl] [-tor] [-DoS]`
 
 You can get basic usage information inside the menus.
 
 ## GraFScaN Help:
-	
+
 	------------------------------------------
 	|           GraFScaN                     |
 	|                                        |
 	| Authors: Miguel Hernández (@MiguelHzBz)|
 	|          Alfonso Muñoz (@mindcrypt)    |
 	| Version: v1.0                          |
-	|                                        |	
-	| Last update: April 28, 2017            |	
-	------------------------------------------	
-		
+	|                                        |
+	| Last update: April 28, 2017            |
+	------------------------------------------
+
 	A pentesting tool for graph databases
-    
+
 	usage: GraFScan.py [-h] [-neo4j] [-orient] [-arango] [-virtuoso] [-allegro]
                    [-all] [-ip IP] [-n NET] [-i FILEINPUT] [-o OUTPUT] [-B]
                    [-dict DICT] [-proxies PROXIES] [-nl] [-tor] [-DoS]
@@ -57,7 +60,7 @@ You can get basic usage information inside the menus.
 	  -DoS                  Option to use DoS without authentication Neo4j.
 
 
-## Output: 
+## Output:
 
 ### Neo4j with auth:
 
@@ -126,12 +129,18 @@ The tool tries to export all databases in the OrientDB Server, it creates a fold
 
 * If you don't put any file after the -proxies option, the tool try to open proxies file in the actual path.
 
-## Authors
-This project is written by Miguel Hernández and Alfonso Muñoz
-
 # Legal Warning
 
 While this may be helpful for some, there are significant risks.
 You could go to jail on obstruction of justice charges just for running grafscan,
 even though you are innocent. Your are on notice, that using this tool outside your
 "own" environment is considered malicious and is against the law. Use with caution.
+
+## Authors
+This project is written by Miguel Hernández and Alfonso Muñoz
+<!-- Banner -->
+<style>.heart{color:#e25555;}</style>
+<p align="center">
+  <img src="./images/banner.png"/>
+</p>
+<h4 align="center" style="margin: -20px">Created with <span class="heart">❤</span> by <a Cybersecurity Lab @ <a href="https://www.bbvanexttechnologies.com">BBVA Next Techonologies</a> </h4>
